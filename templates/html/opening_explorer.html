@@ -5,7 +5,6 @@
         <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
         <meta content="utf-8" http-equiv="encoding">
         <link rel="stylesheet" href="{{ url_for('static', filename="css/chessboard-1.0.0.min.css")}}">
-        <link rel="stylesheet" href="static/css/opening_explorer.css" type="text/css">
 
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
         <script src="{{ url_for('chessboard_js') }}"></script>
@@ -15,6 +14,7 @@
         <div style="width: 25%; display: inline-block">
             <div id="myBoard" style="width: 400px"></div>
             <div>
+                <button type="change" onclick="undoAll()">Undo All</button>
                 <button type="change" onclick="undo()">Undo</button>
                 <button type="change" onclick="setColor('white')">White</button>
                 <button type="change" onclick="setColor('black')">Black</button>
@@ -136,6 +136,13 @@
                 getMoveData()
             }
 
+
+            function undoAll(){
+                game = new Chess()
+                board.position(game.fen())
+                $.get( `http://127.0.0.1:5000/getmethod/_`);
+                getMoveData()
+            }
 
             var board = null
             var game = new Chess()
