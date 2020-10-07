@@ -20,8 +20,8 @@
                 <button type="change" onclick="setColor('black')">Black</button>
             </div>
             <div>
-                <input type="button" id="btnSearch" value="Search" onclick="setOpponent()"></input>
-                <input type="button" id="btnExclude" value="Exclude" onclick="setExcludedOpponent()"></input>
+                <button type="change" id="btnSearch" onclick="setOpponent()">Search</button>
+                <button type="change" id="btnExclude" onclick="setExcludedOpponent()">Exclude</button>
                 <input type="text" id="txtBox" onkeydown = "textBox()"></input>
                 <button type="change" onclick="resetOpponents()">Reset</button>
             </div>
@@ -86,11 +86,14 @@
             }
 
 
-            function setOpponent(opponent){
+            function setOpponent(){
                 var opponent = document.getElementById("txtBox").value;
                 document.getElementById('txtBox').value = '';
-                $.get(`http://127.0.0.1:5000/getmethod/setopponent${opponent}`);
-                getMoveData()
+
+                if (opponent !== ""){
+                    $.get(`http://127.0.0.1:5000/getmethod/setopponent${opponent}`);
+                    getMoveData()
+                }
             }
 
 
