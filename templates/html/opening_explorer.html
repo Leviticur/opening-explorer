@@ -14,12 +14,17 @@
     <body>
         <div style="width: 25%; display: inline-block">
             <div id="myBoard" style="width: 400px"></div>
-            <button type="change" onclick="undo()">Undo</button>
-            <button type="change" onclick="setMode('white')">White</button>
-            <button type="change" onclick="setMode('black')">Black</button>
-            <input type="text" id="txtSearch" onkeydown = "if (event.keyCode == 13) document.getElementById('btnSearch').click()"></input>
-            <input type="button" id="btnSearch" value="Search" onclick="setOpponent()"></input>
-            <button type="change" onclick="setOpponent('all')">All</button>
+            <div>
+                <button type="change" onclick="undo()">Undo</button>
+                <button type="change" onclick="setColor('white')">White</button>
+                <button type="change" onclick="setColor('black')">Black</button>
+            </div>
+            <div>
+                <input type="button" id="btnSearch" value="Search" onclick="setOpponent()"></input>
+                <input type="button" id="btnExclude" value="Exclude" onclick="setExcludedOpponent()"></input>
+                <input type="text" id="txtBox" onkeydown = "textBox()"></input>
+                <button type="change" onclick="resetOpponents()">Reset</button>
+            </div>
             <div>
                 <button type="change" onclick="setTimeControl('blitz')">Blitz</button>
                 <button type="change" onclick="setTimeControl('classical')">Classical</button>
@@ -30,6 +35,7 @@
 
 
         <script>
+
 
             function getMoveData(){
                 $.get("http://127.0.0.1:5000/getpythondata")
@@ -63,32 +69,59 @@
 
             }
 
-            function setMode(mode){
-                if (mode === "white") {
+            function setColor(color){
+                if (color === "white") {
                     $.get( "http://127.0.0.1:5000/getmethod/setcolorwhite");
                 }
-                if (mode === "black") {
+                if (color === "black") {
                     $.get( "http://127.0.0.1:5000/getmethod/setcolorblack");
                 }
                 getMoveData()
             }
 
 
-            function setOpponent(opponent){
-                if (opponent === "all"){
-                    $.get('http://127.0.0.1:5000/getmethod/setopponent');
-                }
-                else{
-                    var opponent = document.getElementById("txtSearch").value;
-                    $.get(`http://127.0.0.1:5000/getmethod/setopponent${opponent}`);
-                }
-                getMoveData()
-            }
-
             function setTimeControl(timeControl){
                 $.get(`http://127.0.0.1:5000/getmethod/settimecontrol${timeControl}`);
                 getMoveData()
             }
+
+
+            function setOpponent(opponent){
+                var opponent = document.getElementById("txtBox").value;
+                document.getElementById('txtBox').value = '';
+                $.get(`http://127.0.0.1:5000/getmethod/setopponent${opponent}`);
+                getMoveData()
+            }
+
+
+            function setExcludedOpponent(excludedOpponent){
+                var excludedOpponent = document.getElementById("txtBox").value;
+                document.getElementById('txtBox').value = '';
+                $.get(`http://127.0.0.1:5000/getmethod/setexcludedopponent${excludedOpponent}`);
+                getMoveData()
+
+            }
+
+
+            function resetOpponents(){
+                document.getElementById('txtBox').value = '';
+                $.get('http://127.0.0.1:5000/getmethod/resetopponents');
+                getMoveData()
+            }
+
+
+            function textBox(){
+                if (event.keyCode == 13 && event.shiftKey){
+                document.getElementById('btnExclude').click()
+                }
+                else if (event.keyCode == 13){
+                document.getElementById('btnSearch').click()
+                }
+                else if (event.keyCode == 8 && event.shiftKey){
+                    resetOpponents()
+                }
+            }
+
 
             function undo(){
                 game.undo();
