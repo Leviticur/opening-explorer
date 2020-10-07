@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Chess</title>
+        <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+        <meta content="utf-8" http-equiv="encoding">
+        <link rel="stylesheet" href="{{ url_for('static', filename="css/chessboard-1.0.0.min.css")}}">
+        <link rel="stylesheet" href="static/css/opening_explorer.css" type="text/css">
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="{{ url_for('chessboard_js') }}"></script>
+        <script src="{{ url_for('static', filename="js/node_modules/chess.js/chess.js")}}"></script>
+    </head>
+    <body>
+        <div style="width: 25%; display: inline-block">
+            <div id="myBoard" style="width: 400px"></div>
+            <button type="change" onclick="undo()">Undo</button>
+            <button type="change" onclick="setMode('white')">White</button>
+            <button type="change" onclick="setMode('black')">Black</button>
+            <input type="text" id="txtSearch" onkeydown = "if (event.keyCode == 13) document.getElementById('btnSearch').click()"></input>
+            <input type="button" id="btnSearch" value="Search" onclick="setOpponent()"></input>
+            <button type="change" onclick="setOpponent('all')">All</button>
+            <div>
+                <button type="change" onclick="setTimeControl('blitz')">Blitz</button>
+                <button type="change" onclick="setTimeControl('classical')">Classical</button>
+                <button type="change" onclick="setTimeControl('all')">All</button>
+            </div>
+        </div>
+        <div id="move_data"></div>
+
+
+        <script>
+
+            function getMoveData(){
+                $.get("http://127.0.0.1:5000/getpythondata")
+                    .done((data) => displayMoveData(data))
+                    .fail((error) => console.log(error))
+            }
+
+            var counter = 0;
+            function displayMoveData(moveData){
+                moveData = JSON.parse(moveData);
+
+                if (counter > 0){
+                    moveDataDiv.remove();
+                }
+                counter = 1;
+
+                moveDataDiv = document.createElement('div');
+                moveDataDiv.style.fontSize = "20px";
+                moveDataDiv.style.fontFamily = "Arial";
+
+                var i;
+                for  (i = 0; i < moveData.length; i++){
+                    const newContent = document.createTextNode(moveData[i][0] + ": " + moveData[i][1][0] + " ( " + moveData[i][1][1][0] + ", " + moveData[i][1][1][1] + ", " + moveData[i][1][1][2] + " ) " + moveData[i][1][2]);
+                    moveDataDiv.appendChild(newContent);
+                    var br = document.createElement("br");
+                    moveDataDiv.appendChild(br);
+               }
+
+                const insertDiv = document.getElementById("move_data");
+                document.body.insertBefore(moveDataDiv, insertDiv);
+
+            }
+
+            function setMode(mode){
+                if (mode === "white") {
+                    $.get( "http://127.0.0.1:5000/getmethod/setcolorwhite");
+                }
+                if (mode === "black") {
+                    $.get( "http://127.0.0.1:5000/getmethod/setcolorblack");
+                }
+                getMoveData()
+            }
+
+
+            function setOpponent(opponent){
+                if (opponent === "all"){
+                    $.get('http://127.0.0.1:5000/getmethod/setopponent');
+                }
+                else{
+                    var opponent = document.getElementById("txtSearch").value;
+                    $.get(`http://127.0.0.1:5000/getmethod/setopponent${opponent}`);
+                }
+                getMoveData()
+            }
+
+            function setTimeControl(timeControl){
+                $.get(`http://127.0.0.1:5000/getmethod/settimecontrol${timeControl}`);
+                getMoveData()
+            }
+
+            function undo(){
+                game.undo();
+                board.position(game.fen());
+
+                if (game.pgn() === ""){
+                    $.get( `http://127.0.0.1:5000/getmethod/_`);
+                }
+                else{
+                    $.get( `http://127.0.0.1:5000/getmethod/${game.pgn().replace(/\s/g, "_")}`);
+                }
+                getMoveData()
+            }
+
+
+            var board = null
+            var game = new Chess()
+            var $status = $('#status')
+            var $fen = $('#fen')
+            var $pgn = $('#pgn')
+
+            function onDragStart (source, piece, position, orientation) {
+                if (game.game_over()) return false
+                if ((game.turn() === 'w' && piece.search(/^b/) !== -1) || (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+                    return false
+                }
+            }
+
+            function onDrop (source, target) {
+                var move = game.move({
+                    from: source,
+                    to: target,
+                    promotion: 'q'
+                })
+
+                if (move === null) return 'snapback'
+
+                updateStatus()
+
+                $.get( `http://127.0.0.1:5000/getmethod/${game.pgn().replace(/\s/g, "_")}`);
+                getMoveData()
+            }
+
+            function onSnapEnd () {
+                board.position(game.fen())
+            }
+
+            function updateStatus () {
+                var status = ''
+                var moveColor = 'White'
+                if (game.turn() === 'b') {
+                    moveColor = 'Black'
+                }
+                if (game.in_checkmate()) {
+                    status = 'Game over, ' + moveColor + ' is in checkmate.'
+                }
+                else if (game.in_draw()) {
+                    status = 'Game over, drawn position'
+                }
+                else {
+                    status = moveColor + ' to move'
+                    if (game.in_check()) {
+                        status += ', ' + moveColor + ' is in check'
+                    }
+                }
+
+                $status.html(status)
+                $fen.html(game.fen())
+                $pgn.html(game.pgn())
+            }
+
+            var config = {
+                draggable: true,
+                position: 'start',
+                onDragStart: onDragStart,
+                onDrop: onDrop,
+                onSnapEnd: onSnapEnd
+            }
+
+            board = Chessboard('myBoard', config)
+            updateStatus()
+
+            $.get(`http://127.0.0.1:5000/getmethod/_`);
+            getMoveData()
+
+        </script>
+    </body>
+</html>
