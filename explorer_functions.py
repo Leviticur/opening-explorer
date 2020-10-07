@@ -40,13 +40,22 @@ def filter_opponent(opponent, white, game_data):
     games_buffer = list()
     if white:
         for game in game_data:
-            if game[2] == opponent:
+            if game[2].lower() == opponent.lower():
                 games_buffer.append(game)
     else:
         for game in game_data:
-            if game[1] == opponent:
+            if game[1].lower() == opponent.lower():
                 games_buffer.append(game)
     return games_buffer
+
+
+def exclude_opponent(opponent, game_data):
+    games_buffer = list()
+    for game in game_data:
+        if game[1].lower() != opponent.lower() and game[2].lower() != opponent.lower():
+            games_buffer.append(game)
+    game_data = games_buffer
+    return game_data
 
 
 def filter_moves(moves, game_data):
@@ -94,13 +103,17 @@ def get_moves_data(game_data, moves):
     return moves_data
 
 
-def get_games(white, username, game_data, moves, time_control, opponent):
+def get_games(white, username, game_data, moves, time_control, opponent, excluded_opponents):
     game_data = filter_casual(game_data)
     game_data = filter_color(white, username, game_data)
     if time_control:
         game_data = filter_time_control(time_control, game_data)
     if opponent:
         game_data = filter_opponent(opponent, white, game_data)
+    if excluded_opponents:
+        for excluded_opponent in excluded_opponents:
+            game_data = exclude_opponent(excluded_opponent, game_data)
     game_data = filter_moves(moves, game_data)
+
     return game_data
 
