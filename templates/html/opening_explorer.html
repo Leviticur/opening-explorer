@@ -11,7 +11,7 @@
         <script src="{{ url_for('static', filename="js/node_modules/chess.js/chess.js")}}"></script>
     </head>
     <body>
-        <div style="width: 25%; display: inline-block">
+        <div style="width: 25%">
             <div id="myBoard" style="width: 400px"></div>
             <div>
                 <button type="change" onclick="undoAll()">Undo All</button>
@@ -30,12 +30,12 @@
                 <button type="change" onclick="setTimeControl('classical')">Classical</button>
                 <button type="change" onclick="setTimeControl('all')">All</button>
             </div>
+
         </div>
         <div id="move_data"></div>
 
 
         <script>
-
 
             function getMoveData(){
                 $.get("http://127.0.0.1:5000/getpythondata")
@@ -43,31 +43,61 @@
                     .fail((error) => console.log(error))
             }
 
+
             var counter = 0;
             function displayMoveData(moveData){
                 moveData = JSON.parse(moveData);
 
                 if (counter > 0){
                     moveDataDiv.remove();
+                    moveButtonDiv.remove();
                 }
                 counter = 1;
 
                 moveDataDiv = document.createElement('div');
+                moveDataDiv.style.display = "inline-block";
+                moveDataDiv.style.margin = "3px";
+                moveDataDiv.style.width = "300px";
                 moveDataDiv.style.fontSize = "20px";
                 moveDataDiv.style.fontFamily = "Arial";
+
+                moveButtonDiv = document.createElement('div');
+                moveButtonDiv.style.display = "inline-block";
+                moveButtonDiv.style.margin = "3px";
+                moveButtonDiv.style.verticalAlign = "top";
 
                 var i;
                 for  (i = 0; i < moveData.length; i++){
                     const newContent = document.createTextNode(moveData[i][0] + ": " + moveData[i][1][0] + " ( " + moveData[i][1][1][0] + ", " + moveData[i][1][1][1] + ", " + moveData[i][1][1][2] + " ) " + moveData[i][1][2]);
                     moveDataDiv.appendChild(newContent);
-                    var br = document.createElement("br");
-                    moveDataDiv.appendChild(br);
+                    var moveButton = document.createElement("BUTTON");
+                    moveButton.style.height = "22px";
+                    moveButton.style.margin = ".5px";
+                    moveButton.innerText = "Move";
+                    moveButton.setAttribute('onclick', 'makeMove("'+moveData[i][0]+'")');
+                    moveButtonDiv.appendChild(moveButton);
+                    var moveDataDivBr = document.createElement("br");
+                    moveDataDiv.appendChild(moveDataDivBr);
+                    var moveButtonDivBr = document.createElement("br");
+                    moveButtonDiv.appendChild(moveButtonDivBr);
+
                }
 
+
                 const insertDiv = document.getElementById("move_data");
-                document.body.insertBefore(moveDataDiv, insertDiv);
+                document.body.insertBefore(moveButtonDiv, insertDiv);
+                document.body.insertBefore(moveDataDiv, moveButtonDiv);
 
             }
+
+
+           function makeMove(move){
+                game.move(move);
+                board.position(game.fen());
+                $.get( `http://127.0.0.1:5000/getmethod/${game.pgn().replace(/\s/g, "_")}`);
+                getMoveData()
+           }
+
 
             function setColor(color){
                 if (color === "white") {
